@@ -1,0 +1,24 @@
+{
+  "$schema": "https://nitro.margelo.com/nitro.schema.json",
+  "cxxNamespace": ["hinge"],
+  "ios": {
+    "iosModuleName": "Hinge",
+    "iosCxxLibName": "Hinge"
+  },
+  "android": {
+    "androidNamespace": ["com", "margelo", "hinge"],
+    "androidCxxLibName": "Hinge"
+  },
+  "autolinking": {
+    "Hinge": {
+      "ios": {
+        "language": "swift",
+        "implementationClassName": "HybridHinge"
+      }
+    }
+  },
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/example/**"
+  ]
+}

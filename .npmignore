@@ -1,0 +1,22 @@
+# Source maps (optional, keep if not needed in tarball)
+lib/**/*.js.map
+lib/**/*.d.ts.map
+
+# Example app & dev setup
+example/
+.expo/
+
+# Config & tooling
+tsconfig.json
+nitro.json
+bun.lock
+package-lock.json
+yarn.lock
+.gitignore
+.gitattributes
+
+# Editor & System
+.idea/
+.vscode/
+.DS_Store
+*.log

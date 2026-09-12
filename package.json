@@ -1,0 +1,65 @@
+{
+  "name": "react-native-hinge",
+  "version": "0.1.0",
+  "description": "Continuous hinge angle reading and posture monitoring for iOS 27 iPhone Duo with Nitro Modules and UI-thread Worklets",
+  "main": "lib/commonjs/index.js",
+  "module": "lib/module/index.js",
+  "types": "lib/index.d.ts",
+  "react-native": "src/index.ts",
+  "source": "src/index.ts",
+  "files": [
+    "src",
+    "lib",
+    "ios",
+    "android",
+    "nitrogen/generated",
+    "nitro.json",
+    "react-native-hinge.podspec",
+    "react-native.config.js",
+    "README.md",
+    "LICENSE",
+    "!**/__tests__",
+    "!**/__fixtures__",
+    "!**/__mocks__"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "codegen": "nitrogen",
+    "prepare": "tsc",
+    "prepack": "tsc",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "react-native",
+    "ios27",
+    "iphone-duo",
+    "hinge",
+    "nitro-modules",
+    "worklets",
+    "foldable"
+  ],
+  "author": "Antigravity",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "react-native-nitro-modules": ">=0.30.0",
+    "react-native-worklets": ">=0.12.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-native": "^0.73.0",
+    "nitrogen": "^0.37.1",
+    "react": "18.3.1",
+    "react-native": "0.76.0",
+    "react-native-nitro-modules": "^0.37.1",
+    "react-native-worklets": "^0.12.2",
+    "typescript": "^5.5.4"
+  },
+  "nitro": {
+    "moduleName": "Hinge",
+    "ios": {
+      "swiftNamespace": "Hinge"
+    }
+  }
+}
