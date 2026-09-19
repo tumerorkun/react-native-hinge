@@ -1,6 +1,6 @@
 {
   "name": "react-native-hinge",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Continuous hinge angle reading and posture monitoring for iOS 27 iPhone Duo with Nitro Modules and UI-thread Worklets",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -37,7 +37,15 @@
     "worklets",
     "foldable"
   ],
-  "author": "Antigravity",
+  "homepage": "https://github.com/tumerorkun/react-native-hinge#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tumerorkun/react-native-hinge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tumerorkun/react-native-hinge/issues"
+  },
+  "author": "Tumer Orkun",
   "license": "MIT",
   "peerDependencies": {
     "react": "*",
