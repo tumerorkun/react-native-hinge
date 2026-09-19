@@ -161,12 +161,13 @@ open class HybridHingeSpec_cxx {
   }
   
   @inline(__always)
-  public final func subscribeToHingeUpdates(onUpdate: bridge.Func_void_HingeUpdate) -> bridge.Result_std__function_void____ {
+  public final func subscribeToHingeUpdates(onUpdate: bridge.Func_bool_HingeUpdate) -> bridge.Result_std__function_void____ {
     do {
-      let __result = try self.__implementation.subscribeToHingeUpdates(onUpdate: { () -> (HingeUpdate) -> Void in
-        let __wrappedFunction = bridge.wrap_Func_void_HingeUpdate(onUpdate)
-        return { (__update: HingeUpdate) -> Void in
-          __wrappedFunction.call(__update)
+      let __result = try self.__implementation.subscribeToHingeUpdates(onUpdate: { () -> (HingeUpdate) -> Bool in
+        let __wrappedFunction = bridge.wrap_Func_bool_HingeUpdate(onUpdate)
+        return { (__update: HingeUpdate) -> Bool in
+          let __result = __wrappedFunction.call(__update)
+          return __result
         }
       }())
       let __resultCpp = { () -> bridge.Func_void in

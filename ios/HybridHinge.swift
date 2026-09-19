@@ -5,110 +5,201 @@ import NitroModules
 /**
  * Native Swift implementation for iPhone Duo Hinge API.
  *
- * Architecture based on Apple Tech Talk 111464:
- * "Take advantage of the unique features of iPhone Duo"
- * https://developer.apple.com/videos/play/tech-talks/111464/
+ * Implements UIKit's UIHingeInteraction:
+ * - Observing hinge state associated with the view hierarchy.
+ * - Handles `update.hinge` being non-null (active hinge) or nil (no hinge / left hierarchy).
+ * - Reads continuous `hinge.angle` and high-level `hinge.status` (`.closed`, `.partiallyOpen`, `.fullyOpen`).
+ * - Dispatches updates synchronously on the UI thread for zero-latency execution with react-native-worklets.
  *
- * Presenters:
- * - Chris Donegan (Engineering Manager, UI Frameworks)
- * - Alex Muller (System Experience Engineer)
- *
- * Key Points from Apple:
- * - UIKit provides `UIHingeInteraction` (and SwiftUI provides `onHingeChange`).
- * - Both report the high-level hinge status: `closed`, `partiallyOpen`, and `fullyOpen`.
- * - Provides continuous updates of the hinge angle (observed live, ideal for interactions & effects).
- * - A non-null hinge indicates a device with a hinge; null indicates a device without one.
- *
- * Note: These APIs are scheduled to arrive with Xcode SDK 27.1.
- * Method implementations are structured with TODO placeholders for linking against Xcode SDK 27.1 headers.
+ * Reference:
+ * - Apple Tech Talk 111464: "Take advantage of the unique features of iPhone Duo"
+ * - UIKit/UIHingeInteraction.h
  */
 public class HybridHinge: HybridHingeSpec_base, HybridHingeSpec_protocol {
 
+    // Current live sensor state (in radians: 0.0 to .pi, matching UIKit UIHinge)
+    private var currentAngle: Double = Double.pi
+    private var currentStatus: HingeStatus = .fullyopen
+    private var hasHingeHardware: Bool = false
+
+    // Persistent probe interaction to detect initial hinge state on launch
+    private var probeInteraction: UIInteraction?
+    private weak var attachedView: UIView?
+
     public override init() {
         super.init()
+
+        // Proactively probe initial hinge state on the key window
+        DispatchQueue.main.async { [weak self] in
+            self?.probeInitialHingeState()
+        }
+    }
+
+    deinit {
+        DispatchQueue.main.async { [weak self] in
+            if let interaction = self?.probeInteraction, let view = self?.attachedView {
+                view.removeInteraction(interaction)
+            }
+        }
     }
 
     // MARK: - Hardware Support Check
 
     /**
      * Checks if current device has a non-null hardware hinge (iPhone Duo).
-     * Reference: Apple Tech Talk 111464 (0:49 - Respond to the hinge)
+     * Returns true when UIHingeInteraction is available and reports an active hinge.
      */
     public func isSupported() throws -> Bool {
-        // TODO: [Xcode SDK 27.1]
-        // Check for non-null hinge using UIHingeInteraction / system capability check:
-        // return UIDevice.current.userInterfaceIdiom == .phone && (UIHingeInteraction.isSupported || window.hinge != nil)
-        return false
+        if #available(iOS 27.1, *) {
+            return hasHingeHardware
+        } else {
+            return false
+        }
     }
 
     // MARK: - Static Queries
 
     /**
-     * Reads current static hinge opening angle in degrees.
+     * Reads current static hinge opening angle in radians (0.0 to Double.pi).
      */
     public func getAngle() throws -> Double {
-        // TODO: [Xcode SDK 27.1]
-        // Query current angle from active UIHingeInteraction instance:
-        // return activeInteraction?.angle ?? 180.0
-        return 180.0
+        return currentAngle
     }
 
     /**
      * Reads current high-level hinge status: closed, partiallyOpen, or fullyOpen.
-     * Reference: Apple Tech Talk 111464 (0:49 - Respond to the hinge)
      */
     public func getStatus() throws -> HingeStatus {
-        // TODO: [Xcode SDK 27.1]
-        // Return current high-level status from UIHingeInteraction:
-        // switch activeInteraction?.status {
-        //   case .closed: return .closed
-        //   case .partiallyOpen: return .partiallyOpen
-        //   case .fullyOpen: return .fullyOpen
-        // }
-        return .fullyOpen
+        return currentStatus
     }
 
     // MARK: - Subscription-based Live Updates
 
     /**
      * Subscribes to live continuous hinge updates via UIKit's UIHingeInteraction.
-     * Dispatches on the UI thread for zero-latency execution with react-native-worklets.
      *
-     * Reference: Apple Tech Talk 111464:
-     * "Hinge data is observed live and is ideal for driving interactions or effects."
+     * Example usage from Apple UIKit UIHingeInteraction.h:
+     * ```swift
+     * if #available(iOS 27.1, *) {
+     *     let interaction = UIHingeInteraction { [weak self] _, update in
+     *         guard let self else { return }
+     *         guard let hinge = update.hinge else {
+     *             print("[UIHingeInteraction] Hinge unavailable")
+     *             return
+     *         }
+     *         print("[UIHingeInteraction] Hinge angle: \(hinge.angle)")
+     *     }
+     *     view.addInteraction(interaction)
+     * }
+     * ```
      *
      * @param onUpdate Callback receiving live hinge data (can be a worklet).
-     * @returns An unsubscribe closure that detaches the interaction and cleans up resources.
+     * @returns An unsubscribe closure that removes the interaction from the view hierarchy.
      */
-    public func subscribeToHingeUpdates(onUpdate: @escaping (_ update: HingeUpdate) -> Void) throws -> () -> Void {
-        // TODO: [Xcode SDK 27.1]
-        // 1. Locate the active UIWindow / UIWindowScene on the main thread:
-        //    guard let window = UIApplication.shared.connectedScenes
-        //        .compactMap({ $0 as? UIWindowScene })
-        //        .flatMap({ $0.windows })
-        //        .first(where: { $0.isKeyWindow }) else {
-        //        return {}
-        //    }
-        //
-        // 2. Instantiate and attach UIHingeInteraction to the view:
-        //    let interaction = UIHingeInteraction { hingeContext in
-        //        guard let hinge = hingeContext.hinge else { return }
-        //        let update = HingeUpdate(
-        //            angle: hinge.angle,
-        //            status: hinge.status,
-        //            timestamp: ProcessInfo.processInfo.systemUptime * 1000.0
-        //        )
-        //        onUpdate(update)
-        //    }
-        //    window.addInteraction(interaction)
-        //
-        // 3. Return an unsubscribe closure to detach interaction:
-        //    return { [weak window, weak interaction] in
-        //        if let interaction = interaction {
-        //            window?.removeInteraction(interaction)
-        //        }
-        //    }
+    public func subscribeToHingeUpdates(onUpdate: @escaping (_ update: HingeUpdate) -> Bool) throws -> () -> Void {
+        guard #available(iOS 27.1, *) else {
+            return {}
+        }
 
-        return {}
+        var interactionToRemove: UIInteraction?
+        weak var targetViewToClean: UIView?
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            guard let window = self.findKeyWindow() else { return }
+
+            let targetView = window.rootViewController?.view ?? window
+
+            // Instantiate UIHingeInteraction with updateHandler
+            let interaction = UIHingeInteraction { [weak self] _, update in
+                guard let self = self else { return }
+
+                // A nil `hinge` indicates the interaction has left a
+                // hierarchy that provides hinge updates (or device has no hinge).
+                guard let hinge = update.hinge else {
+                    self.hasHingeHardware = false
+                    return
+                }
+
+                self.hasHingeHardware = true
+                self.currentAngle = hinge.angle
+                let status = HingeStatus(hinge.status)
+                self.currentStatus = status
+
+                let payload = HingeUpdate(
+                    angle: hinge.angle,
+                    status: status,
+                    timestamp: Date().timeIntervalSince1970 * 1000.0
+                )
+
+                // Dispatched on UI thread for zero-latency execution with react-native-worklets
+                _ = onUpdate(payload)
+            }
+
+            targetView.addInteraction(interaction)
+            interactionToRemove = interaction
+            targetViewToClean = targetView
+        }
+
+        // Return unsubscribe function
+        return {
+            DispatchQueue.main.async {
+                if let interaction = interactionToRemove, let view = targetViewToClean {
+                    view.removeInteraction(interaction)
+                }
+            }
+        }
+    }
+
+    // MARK: - Private Helpers
+
+    /**
+     * Adds an initial interaction to observe the hinge state immediately on launch.
+     * "The handler is invoked with the initial hinge state, and again whenever there is an update."
+     */
+    private func probeInitialHingeState() {
+        guard #available(iOS 27.1, *) else { return }
+        guard let window = findKeyWindow() else { return }
+
+        let targetView = window.rootViewController?.view ?? window
+        let probe = UIHingeInteraction { [weak self] _, update in
+            guard let self = self else { return }
+            if let hinge = update.hinge {
+                self.hasHingeHardware = true
+                self.currentAngle = hinge.angle
+                self.currentStatus = HingeStatus(hinge.status)
+            } else {
+                self.hasHingeHardware = false
+            }
+        }
+
+        targetView.addInteraction(probe)
+        self.probeInteraction = probe
+        self.attachedView = targetView
+    }
+
+    private func findKeyWindow() -> UIWindow? {
+        return UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap { $0.windows }
+            .first { $0.isKeyWindow }
+    }
+}
+
+// MARK: - Direct UIHinge.Status Bridge Extension
+
+@available(iOS 27.1, *)
+extension HingeStatus {
+    init(_ status: UIHinge.Status) {
+        switch status {
+        case .closed:
+            self = .closed
+        case .partiallyOpen:
+            self = .partiallyopen
+        case .fullyOpen:
+            self = .fullyopen
+        default:
+            self = .fullyopen
+        }
     }
 }

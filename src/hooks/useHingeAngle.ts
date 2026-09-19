@@ -1,41 +1,42 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
-import { Platform } from 'react-native'
-import { NitroModules } from 'react-native-nitro-modules'
-import type { Hinge, HingeUpdate, HingeStatus } from '../specs/Hinge.nitro'
+import { useEffect, useState, useRef, useCallback } from "react";
+import { Platform } from "react-native";
+import { NitroModules } from "react-native-nitro-modules";
+import { scheduleOnUI, scheduleOnRN } from "react-native-worklets";
+import type { Hinge, HingeUpdate, HingeStatus } from "../specs/Hinge.nitro";
 
 /**
  * No-op implementation for all non-iOS platforms (Android, Web, Windows, macOS, etc.)
  * Ensures safe execution without throwing missing hybrid object errors.
  */
 const NoopHinge: Hinge = {
-  name: 'Hinge',
+  name: "Hinge",
   isSupported: () => false,
-  getAngle: () => 180.0,
-  getStatus: () => 'fullyOpen',
+  getAngle: () => Math.PI,
+  getStatus: () => "fullyOpen",
   subscribeToHingeUpdates: () => () => {},
   equals: (other) => other === NoopHinge,
   dispose: () => {},
-  toString: () => '[HybridObject Hinge (Noop)]',
-}
+  toString: () => "[HybridObject Hinge (Noop)]",
+};
 
 /**
  * Loads native Nitro HybridObject on iOS, or returns safe No-op on other platforms.
  */
 function resolveHingeModule(): Hinge {
-  if (Platform.OS !== 'ios') {
-    return NoopHinge
+  if (Platform.OS !== "ios") {
+    return NoopHinge;
   }
 
   try {
-    return NitroModules.createHybridObject<Hinge>('Hinge')
+    return NitroModules.createHybridObject<Hinge>("Hinge");
   } catch {
     // If native module is not linked or unavailable in this build, fallback to Noop
-    return NoopHinge
+    return NoopHinge;
   }
 }
 
 // Load Nitro Hybrid Object singleton with non-iOS noop safety
-export const HingeModule: Hinge = resolveHingeModule()
+export const HingeModule: Hinge = resolveHingeModule();
 
 /**
  * Top-level convenience subscription helper.
@@ -50,8 +51,39 @@ export const HingeModule: Hinge = resolveHingeModule()
  * unsubscribe()
  * ```
  */
-export function subscribeToHinge(onUpdate: (update: HingeUpdate) => void): () => void {
-  return HingeModule.subscribeToHingeUpdates(onUpdate)
+export function subscribeToHinge(
+  onUpdate: (update: HingeUpdate) => void,
+): () => void {
+  let unsubscribe: (() => void) | null = null;
+
+  scheduleOnUI(() => {
+    "worklet";
+    unsubscribe = HingeModule.subscribeToHingeUpdates((update) => {
+      "worklet";
+      onUpdate(update);
+      return true;
+    });
+  });
+
+  return () => {
+    scheduleOnUI(() => {
+      "worklet";
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    });
+  };
+}
+
+const RAD_TO_DEG = 180 / Math.PI;
+
+export type AngleUnit = "degrees" | "radians";
+
+/**
+ * Converts radians to degrees.
+ */
+export function radiansToDegrees(radians: number): number {
+  return radians * RAD_TO_DEG;
 }
 
 export interface UseHingeAngleOptions {
@@ -59,23 +91,36 @@ export interface UseHingeAngleOptions {
    * Continuous callback invoked on each live hinge update.
    * Can be a UI-thread worklet (marked with `'worklet';`) from `react-native-worklets`
    * for driving live frame-accurate interactions or effects (e.g. pitch bend, folding 3D transforms).
+   *
+   * Note: The `update.angle` in the callback will match the specified `unit` option.
    */
-  onHingeUpdate?: (update: HingeUpdate) => void
+  onHingeUpdate?: (update: HingeUpdate) => void;
+
+  /**
+   * Angle measurement unit returned by `angle` and received in `onHingeUpdate`.
+   * - `'radians'`: Native UIKit format (0 to π).
+   * - `'degrees'`: Converted to degrees (0° to 180°).
+   *
+   * @default 'degrees'
+   */
+  unit?: AngleUnit;
 
   /**
    * Whether to actively subscribe to hinge updates.
    * @default true
    */
-  enabled?: boolean
+  enabled?: boolean;
 }
 
 export interface UseHingeAngleResult {
-  /** Current opening angle in degrees. */
-  angle: number
+  /** Current opening angle in the requested unit ('degrees' or 'radians'). */
+  angle: number;
+  /** Angle measurement unit used ('degrees' | 'radians'). */
+  unit: AngleUnit;
   /** High-level status: 'closed' | 'partiallyOpen' | 'fullyOpen'. */
-  status: HingeStatus
+  status: HingeStatus;
   /** Whether the current hardware device has a non-null hinge (iPhone Duo on iOS). */
-  isSupported: boolean
+  isSupported: boolean;
 }
 
 /**
@@ -84,94 +129,125 @@ export interface UseHingeAngleResult {
  * Supports zero-latency UI thread execution using `react-native-worklets`.
  * Runs in safe No-op mode on non-iOS platforms (Android, Web, etc.).
  *
+ * Apple UIKit provides the native angle in radians. Set `unit: 'degrees'` (default)
+ * or `unit: 'radians'` according to your math/animation needs.
+ *
  * Reference: Apple Tech Talk 111464:
  * "Hinge data is observed live and is ideal for driving interactions or effects."
  * https://developer.apple.com/videos/play/tech-talks/111464/
  *
  * @example
  * ```tsx
- * useHingeAngle({
- *   onHingeUpdate: (update) => {
- *     'worklet';
- *     if (update.status === 'partiallyOpen') {
- *       bendAmount.value = update.angle;
- *     } else {
- *       bendAmount.value = 0;
- *     }
- *   },
- * });
+ * // Default: degrees (0° to 180°)
+ * const { angle, status } = useHingeAngle();
+ *
+ * // Or explicitly radians (0 to π):
+ * const { angle } = useHingeAngle({ unit: 'radians' });
  * ```
  */
-export function useHingeAngle(options: UseHingeAngleOptions = {}): UseHingeAngleResult {
-  const { onHingeUpdate, enabled = true } = options
+export function useHingeAngle(
+  options: UseHingeAngleOptions = {},
+): UseHingeAngleResult {
+  const { onHingeUpdate, unit = "radians", enabled = true } = options;
 
-  const isSupported = HingeModule.isSupported()
-
-  const [state, setState] = useState<HingeUpdate>(() => ({
-    angle: isSupported ? HingeModule.getAngle() : 180,
-    status: isSupported ? HingeModule.getStatus() : 'fullyOpen',
+  // Native module returns radians (0 to π, or Math.PI when fully open)
+  const [nativeState, setNativeState] = useState<HingeUpdate>(() => ({
+    angle: HingeModule.getAngle(),
+    status: HingeModule.getStatus(),
     timestamp: Date.now(),
-  }))
+  }));
 
-  const onUpdateRef = useRef(onHingeUpdate)
-  onUpdateRef.current = onHingeUpdate
+  const [hasHardwareSupport, setHasHardwareSupport] = useState<boolean>(() =>
+    HingeModule.isSupported(),
+  );
 
   useEffect(() => {
-    // If disabled or non-iOS / unsupported platform, do not attach native listeners
-    if (!enabled || !isSupported) {
-      return
+    // If disabled or non-iOS platform, do not attach native listeners
+    if (!enabled || Platform.OS !== "ios") {
+      return;
     }
+
+    const updateReactState = (update: HingeUpdate) => {
+      setHasHardwareSupport(true);
+      setNativeState(update);
+    };
+
+    const currentUnit = unit;
+    const userCallback = onHingeUpdate;
 
     const handleUpdate = (update: HingeUpdate) => {
-      // 1. Invoke custom callback / UI-thread worklet if provided
-      if (onUpdateRef.current) {
-        onUpdateRef.current(update)
+      "worklet";
+      // update.angle from native is in radians
+      const convertedAngle =
+        currentUnit === "degrees" ? update.angle * RAD_TO_DEG : update.angle;
+
+      const formattedUpdate: HingeUpdate = {
+        ...update,
+        angle: convertedAngle,
+      };
+
+      // 1. Invoke custom callback directly on the UI thread / worklet runtime
+      if (userCallback) {
+        userCallback(formattedUpdate);
       }
 
-      // 2. Update React state for standard component re-renders
-      setState(update)
-    }
+      // 2. Safely sync React component state back on the React Native JS thread
+      try {
+        scheduleOnRN(updateReactState, update);
+      } catch {
+        updateReactState(update);
+      }
 
-    // Subscribe via subscribeToHingeUpdates and return unsubscribe cleanup closure
-    const unsubscribe = HingeModule.subscribeToHingeUpdates(handleUpdate)
+      return true;
+    };
+
+    let unsubscribe: (() => void) | null = null;
+
+    scheduleOnUI(() => {
+      "worklet";
+      unsubscribe = HingeModule.subscribeToHingeUpdates(handleUpdate);
+    });
+
     return () => {
-      unsubscribe()
-    }
-  }, [enabled, isSupported])
+      scheduleOnUI(() => {
+        "worklet";
+        if (unsubscribe) {
+          unsubscribe();
+        }
+      });
+    };
+  }, [enabled, unit, onHingeUpdate]);
+
+  const currentAngle =
+    unit === "degrees" ? nativeState.angle * RAD_TO_DEG : nativeState.angle;
 
   return {
-    angle: state.angle,
-    status: state.status,
-    isSupported,
-  }
+    angle: currentAngle,
+    unit,
+    status: nativeState.status,
+    isSupported: hasHardwareSupport,
+  };
 }
 
 /**
  * Hook to track discrete high-level hinge status transitions:
  * 'closed' | 'partiallyOpen' | 'fullyOpen'
  */
-export function useHingeStatus(
-  onStatusChange?: (status: HingeStatus) => void
-): HingeStatus {
+export function useHingeStatus(): HingeStatus {
   const [status, setStatus] = useState<HingeStatus>(() =>
-    HingeModule.isSupported() ? HingeModule.getStatus() : 'fullyOpen'
-  )
+    HingeModule.isSupported() ? HingeModule.getStatus() : "fullyOpen",
+  );
 
-  const lastStatusRef = useRef<HingeStatus>(status)
-  const onStatusChangeRef = useRef(onStatusChange)
-  onStatusChangeRef.current = onStatusChange
-
-  const handleUpdate = useCallback((update: HingeUpdate) => {
+  const lastStatusRef = useRef<HingeStatus>(status);
+  const onHingeUpdate = useCallback((update: HingeUpdate) => {
+    "worklet";
     if (update.status !== lastStatusRef.current) {
-      lastStatusRef.current = update.status
-      setStatus(update.status)
-      onStatusChangeRef.current?.(update.status)
+      lastStatusRef.current = update.status;
+      scheduleOnRN(setStatus, update.status);
     }
-  }, [])
+  }, []);
 
-  useHingeAngle({
-    onHingeUpdate: handleUpdate,
-  })
+  useHingeAngle({ onHingeUpdate });
 
-  return status
+  return status;
 }

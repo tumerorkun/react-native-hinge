@@ -22,11 +22,12 @@ namespace margelo::nitro::hinge::bridge::swift {
     };
   }
   
-  // pragma MARK: std::function<void(const HingeUpdate& /* update */)>
-  Func_void_HingeUpdate create_Func_void_HingeUpdate(void* NON_NULL swiftClosureWrapper) noexcept {
-    auto swiftClosure = Hinge::Func_void_HingeUpdate::fromUnsafe(swiftClosureWrapper);
-    return [swiftClosure = std::move(swiftClosure)](const HingeUpdate& update) mutable -> void {
-      swiftClosure.call(update);
+  // pragma MARK: std::function<bool(const HingeUpdate& /* update */)>
+  Func_bool_HingeUpdate create_Func_bool_HingeUpdate(void* NON_NULL swiftClosureWrapper) noexcept {
+    auto swiftClosure = Hinge::Func_bool_HingeUpdate::fromUnsafe(swiftClosureWrapper);
+    return [swiftClosure = std::move(swiftClosure)](const HingeUpdate& update) mutable -> bool {
+      auto __result = swiftClosure.call(update);
+      return __result;
     };
   }
   

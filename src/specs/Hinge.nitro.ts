@@ -1,4 +1,4 @@
-import { type HybridObject } from 'react-native-nitro-modules'
+import { type HybridObject, type Sync } from 'react-native-nitro-modules'
 
 /**
  * High-level hinge status reported by Apple's UIHingeInteraction / onHingeChange.
@@ -12,11 +12,11 @@ export type HingeStatus = 'closed' | 'partiallyOpen' | 'fullyOpen'
  * Ideal for driving live interactions or visual effects.
  */
 export interface HingeUpdate {
-  /** Continuous hinge angle in degrees. */
+  /** Continuous hinge angle in radians (as reported natively by UIKit UIHinge). */
   angle: number
   /** High-level hinge status: 'closed' | 'partiallyOpen' | 'fullyOpen'. */
   status: HingeStatus
-  /** Monotonic hardware timestamp. */
+  /** Unix epoch timestamp in milliseconds (Date.now() compatible). */
   timestamp: number
 }
 
@@ -31,7 +31,7 @@ export interface Hinge extends HybridObject<{ ios: 'swift' }> {
   isSupported(): boolean
 
   /**
-   * Reads current static hinge opening angle in degrees.
+   * Reads current static hinge opening angle in radians.
    */
   getAngle(): number
 
@@ -43,11 +43,12 @@ export interface Hinge extends HybridObject<{ ios: 'swift' }> {
   /**
    * Subscribes to live continuous hinge updates via UIHingeInteraction.
    * Dispatches on the UI thread for zero-latency execution with react-native-worklets.
+   * Angle is reported in native radians (0 to π).
    *
    * @param onUpdate Callback receiving live hinge data (can be a worklet).
    * @returns An unsubscribe function to stop listening and release the interaction.
    */
   subscribeToHingeUpdates(
-    onUpdate: (update: HingeUpdate) => void
+    onUpdate: Sync<(update: HingeUpdate) => boolean>
   ): () => void
 }

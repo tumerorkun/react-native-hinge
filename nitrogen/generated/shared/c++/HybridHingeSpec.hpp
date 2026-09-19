@@ -56,7 +56,7 @@ namespace margelo::nitro::hinge {
       virtual bool isSupported() = 0;
       virtual double getAngle() = 0;
       virtual HingeStatus getStatus() = 0;
-      virtual std::function<void()> subscribeToHingeUpdates(const std::function<void(const HingeUpdate& /* update */)>& onUpdate) = 0;
+      virtual std::function<void()> subscribeToHingeUpdates(const std::function<bool(const HingeUpdate& /* update */)>& onUpdate) = 0;
 
     protected:
       // Hybrid Setup

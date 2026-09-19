@@ -95,7 +95,7 @@ namespace margelo::nitro::hinge {
       auto __value = std::move(__result.value());
       return __value;
     }
-    inline std::function<void()> subscribeToHingeUpdates(const std::function<void(const HingeUpdate& /* update */)>& onUpdate) override {
+    inline std::function<void()> subscribeToHingeUpdates(const std::function<bool(const HingeUpdate& /* update */)>& onUpdate) override {
       auto __result = _swiftPart.subscribeToHingeUpdates(onUpdate);
       if (__result.hasError()) [[unlikely]] {
         std::rethrow_exception(__result.error());

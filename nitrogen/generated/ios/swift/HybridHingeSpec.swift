@@ -16,7 +16,7 @@ public protocol HybridHingeSpec_protocol: HybridObject {
   func isSupported() throws -> Bool
   func getAngle() throws -> Double
   func getStatus() throws -> HingeStatus
-  func subscribeToHingeUpdates(onUpdate: @escaping (_ update: HingeUpdate) -> Void) throws -> () -> Void
+  func subscribeToHingeUpdates(onUpdate: @escaping (_ update: HingeUpdate) -> Bool) throws -> () -> Void
 }
 
 public extension HybridHingeSpec_protocol {

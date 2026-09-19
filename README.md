@@ -11,13 +11,14 @@ Architecture based on Apple Tech Talk 111464:
 ## 🌟 Features
 
 - ⚡ **Nitro Modules Architecture**: Ultra-fast C++ and Swift Hybrid Objects with zero serialization overhead.
-- 🧵 **UI-Thread Worklets**: Directly observe continuous hinge angle streams using `react-native-worklets` without blocking the JS event loop.
+- 🧵 **Zero-Latency UI-Thread Worklets**: Directly observe continuous hinge angle streams using `react-native-worklets` running directly on the UI Runtime.
 - 📐 **Apple Tech Talk 111464 Alignment**:
   - High-level hinge status: `'closed' | 'partiallyOpen' | 'fullyOpen'`.
-  - Continuous hinge angle updates (ideal for live effects and interactions like pitch bends or folding transforms).
+  - Continuous hinge angle updates (ideal for live effects and interactions like pitch bends, 3D folding transforms, or responsive layouts).
   - Checking for non-null hinge to determine hardware support.
-- 🛠️ **Xcode SDK 27.1 Ready**: Clean Swift architectural skeleton with explicit `TODO: [Xcode SDK 27.1]` connection points for `UIHingeInteraction`.
-- 📱 **Included Interactive Example App**: Dual-screen visualizer and telemetry demo.
+- 🍏 **Native iOS 27.1 Support**: Full native implementation using UIKit's `UIHingeInteraction` with `if #available(iOS 27.1, *)`.
+- 🛡️ **Cross-Platform Safe**: Android, Web, and legacy iOS safely fallback to a lightweight No-op without crashing or breaking builds.
+- 📱 **Included Interactive Example App**: Telemetry, live posture monitor, and whammy-bar pitch bend demo.
 
 ---
 
@@ -49,26 +50,27 @@ npm run codegen
 
 ### 1. Live Interactive Effects with UI-Thread Worklets
 
-Reference from Tech Talk 111464:
-> *"The onHingeChange modifier / UIHingeInteraction takes a closure... Check for a non-null hinge, since null indicates a device without one, and filter for the partially open state — adding an else condition to reset when the angle isn't being read."*
+UIKit's `UIHingeInteraction` reports the native angle in **radians** (0 to π). `useHingeAngle` defaults to **degrees** (`unit: 'degrees'`, 0° to 180°), but you can pass `unit: 'radians'` whenever needed:
 
 ```tsx
-import React from 'react'
+import React, { useCallback } from 'react'
 import { useHingeAngle, type HingeUpdate } from 'react-native-hinge'
 
 export function DuoInteractionView() {
-  // Callback executed on the UI thread via react-native-worklets
-  const onHingeUpdate = (update: HingeUpdate) => {
+  // Memoize callback to prevent re-declaring on every render
+  const onHingeUpdate = useCallback((update: HingeUpdate) => {
     'worklet'
     if (update.status === 'partiallyOpen') {
-      // update.angle: continuous hinge opening angle
+      // update.angle: continuous hinge opening angle (degrees or radians based on unit option)
       // Drive live interaction (e.g. whammy-bar pitch bend, 3D folding transform)
     } else {
       // Reset effect when device is not in partially open state
     }
-  }
+  }, [])
 
+  // Degrees (default):
   const { angle, status, isSupported } = useHingeAngle({
+    unit: 'degrees', // 'degrees' (default, 0° to 180°) or 'radians' (0 to π)
     onHingeUpdate,
   })
 
@@ -78,13 +80,14 @@ export function DuoInteractionView() {
 
 ### 2. Direct Subscription API (`subscribeToHinge`)
 
-You can subscribe directly to continuous hinge updates outside of React components or in custom stores. The method returns an `unsubscribe` cleanup function:
+You can subscribe directly to continuous hinge updates outside of React components or in custom stores. Note that the low-level `subscribeToHinge` passes the native UIKit value (in radians), and helper conversion functions `radiansToDegrees` and `degreesToRadians` are exported for your convenience:
 
 ```typescript
-import { subscribeToHinge } from 'react-native-hinge'
+import { subscribeToHinge, radiansToDegrees } from 'react-native-hinge'
 
 const unsubscribe = subscribeToHinge((update) => {
-  console.log('Live angle:', update.angle, 'Status:', update.status)
+  const degrees = radiansToDegrees(update.angle)
+  console.log('Live angle (rad):', update.angle, 'degrees:', degrees, 'Status:', update.status)
 })
 
 // Stop observing and release resources:
@@ -96,12 +99,15 @@ unsubscribe()
 Track discrete transitions (`closed` -> `partiallyOpen` -> `fullyOpen`):
 
 ```tsx
+import React, { useCallback } from 'react'
 import { useHingeStatus } from 'react-native-hinge'
 
 export function AdaptiveDuoLayout() {
-  const status = useHingeStatus((newStatus) => {
+  const handleStatusChange = useCallback((newStatus: string) => {
     console.log('iPhone Duo hinge status changed to:', newStatus)
-  })
+  }, [])
+
+  const status = useHingeStatus(handleStatusChange)
 
   if (status === 'partiallyOpen') {
     return <BookOrSeatedLayout />

@@ -56,26 +56,27 @@ namespace margelo::nitro::hinge::bridge::swift {
     return Func_void_Wrapper(std::move(value));
   }
   
-  // pragma MARK: std::function<void(const HingeUpdate& /* update */)>
+  // pragma MARK: std::function<bool(const HingeUpdate& /* update */)>
   /**
-   * Specialized version of `std::function<void(const HingeUpdate&)>`.
+   * Specialized version of `std::function<bool(const HingeUpdate&)>`.
    */
-  using Func_void_HingeUpdate = std::function<void(const HingeUpdate& /* update */)>;
+  using Func_bool_HingeUpdate = std::function<bool(const HingeUpdate& /* update */)>;
   /**
-   * Wrapper class for a `std::function<void(const HingeUpdate& / * update * /)>`, this can be used from Swift.
+   * Wrapper class for a `std::function<bool(const HingeUpdate& / * update * /)>`, this can be used from Swift.
    */
-  class Func_void_HingeUpdate_Wrapper final {
+  class Func_bool_HingeUpdate_Wrapper final {
   public:
-    explicit Func_void_HingeUpdate_Wrapper(std::function<void(const HingeUpdate& /* update */)>&& func): _function(std::make_unique<std::function<void(const HingeUpdate& /* update */)>>(std::move(func))) {}
-    inline void call(HingeUpdate update) const noexcept {
-      _function->operator()(update);
+    explicit Func_bool_HingeUpdate_Wrapper(std::function<bool(const HingeUpdate& /* update */)>&& func): _function(std::make_unique<std::function<bool(const HingeUpdate& /* update */)>>(std::move(func))) {}
+    inline bool call(HingeUpdate update) const noexcept {
+      auto __result = _function->operator()(update);
+      return __result;
     }
   private:
-    std::unique_ptr<std::function<void(const HingeUpdate& /* update */)>> _function;
+    std::unique_ptr<std::function<bool(const HingeUpdate& /* update */)>> _function;
   } SWIFT_NONCOPYABLE;
-  Func_void_HingeUpdate create_Func_void_HingeUpdate(void* NON_NULL swiftClosureWrapper) noexcept;
-  inline Func_void_HingeUpdate_Wrapper wrap_Func_void_HingeUpdate(Func_void_HingeUpdate value) noexcept {
-    return Func_void_HingeUpdate_Wrapper(std::move(value));
+  Func_bool_HingeUpdate create_Func_bool_HingeUpdate(void* NON_NULL swiftClosureWrapper) noexcept;
+  inline Func_bool_HingeUpdate_Wrapper wrap_Func_bool_HingeUpdate(Func_bool_HingeUpdate value) noexcept {
+    return Func_bool_HingeUpdate_Wrapper(std::move(value));
   }
   
   // pragma MARK: std::shared_ptr<HybridHingeSpec>
