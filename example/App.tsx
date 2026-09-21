@@ -44,14 +44,14 @@ export default function App() {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.badge}>UIKit • UIHingeInteraction</Text>
-            <Text style={styles.title}>iPhone Duo Hinge API</Text>
+            <Text style={styles.badge}>UIKit • UIHingeInteraction | Jetpack • WindowManager</Text>
+            <Text style={styles.title}>Hinge API</Text>
             <Text style={styles.subtitle}>Live Worklet Integration {hingeStatus}</Text>
           </View>
 
           {/* Live Telemetry Card */}
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>UIHingeInteraction Telemetry</Text>
+            <Text style={styles.cardTitle}>Live Hinge Telemetry</Text>
 
             <View style={styles.row}>
               <Text style={styles.label}>Hinge Angle (Live):</Text>
