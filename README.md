@@ -7,7 +7,7 @@ Architecture based on Apple Tech Talk 111464:
 *(Chris Donegan, Engineering Manager in UI Frameworks & Alex Muller, System Experience Engineer)*.
 
 <p align="center">
-  <video src="./example/assets/screen_recording.mp4" width="420" controls autoplay loop muted playsinline></video>
+  <img src="https://raw.githubusercontent.com/tumerorkun/react-native-hinge/main/example/assets/demo.gif" width="460" alt="react-native-hinge iPhone Duo Live Demo" />
 </p>
 
 ---
