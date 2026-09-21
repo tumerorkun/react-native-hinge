@@ -6,6 +6,10 @@ Architecture based on Apple Tech Talk 111464:
 **["Take advantage of the unique features of iPhone Duo"](https://developer.apple.com/videos/play/tech-talks/111464/)**
 *(Chris Donegan, Engineering Manager in UI Frameworks & Alex Muller, System Experience Engineer)*.
 
+<p align="center">
+  <video src="./example/assets/screen_recording.mp4" width="420" controls autoplay loop muted playsinline></video>
+</p>
+
 ---
 
 ## 🌟 Features
@@ -50,7 +54,7 @@ npm run codegen
 
 ### 1. Live Interactive Effects with UI-Thread Worklets
 
-UIKit's `UIHingeInteraction` reports the native angle in **radians** (0 to π). `useHingeAngle` defaults to **degrees** (`unit: 'degrees'`, 0° to 180°), but you can pass `unit: 'radians'` whenever needed:
+UIKit's `UIHingeInteraction` reports the native angle in **radians** (0 to π). `useHingeAngle` defaults to **radians** (`unit: 'radians'`, 0 to π), matching UIKit natively. You can pass `unit: 'degrees'` (0° to 180°) whenever needed:
 
 ```tsx
 import React, { useCallback } from 'react'
@@ -61,16 +65,16 @@ export function DuoInteractionView() {
   const onHingeUpdate = useCallback((update: HingeUpdate) => {
     'worklet'
     if (update.status === 'partiallyOpen') {
-      // update.angle: continuous hinge opening angle (degrees or radians based on unit option)
+      // update.angle: continuous hinge opening angle (radians by default, or degrees if unit: 'degrees')
       // Drive live interaction (e.g. whammy-bar pitch bend, 3D folding transform)
     } else {
       // Reset effect when device is not in partially open state
     }
   }, [])
 
-  // Degrees (default):
+  // Radians (default):
   const { angle, status, isSupported } = useHingeAngle({
-    unit: 'degrees', // 'degrees' (default, 0° to 180°) or 'radians' (0 to π)
+    unit: 'radians', // 'radians' (default, 0 to π) or 'degrees' (0° to 180°)
     onHingeUpdate,
   })
 
@@ -131,4 +135,4 @@ export function AdaptiveDuoLayout() {
 
 ## 📄 License
 
-MIT © Tumer Orkun
+MIT

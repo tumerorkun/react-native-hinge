@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { StyleSheet, Text, View, ScrollView } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { useHingeAngle, useHingeStatus } from "react-native-hinge";
+import { HingeUpdate, useHingeAngle, useHingeStatus } from "react-native-hinge";
 import { isUIRuntime, getRuntimeKind } from "react-native-worklets";
 
 export default function App() {
@@ -10,7 +10,7 @@ export default function App() {
   // Hook for continuous hinge reading via UIKit UIHingeInteraction
   const { angle, status, isSupported } = useHingeAngle({
     unit: "degrees",
-    onHingeUpdate: useCallback((update) => {
+    onHingeUpdate: useCallback((update: HingeUpdate) => {
       "worklet";
       const onUI = typeof isUIRuntime === "function" ? isUIRuntime() : false;
       const runtimeKind =

@@ -101,7 +101,7 @@ export interface UseHingeAngleOptions {
    * - `'radians'`: Native UIKit format (0 to π).
    * - `'degrees'`: Converted to degrees (0° to 180°).
    *
-   * @default 'degrees'
+   * @default 'radians'
    */
   unit?: AngleUnit;
 
@@ -129,8 +129,8 @@ export interface UseHingeAngleResult {
  * Supports zero-latency UI thread execution using `react-native-worklets`.
  * Runs in safe No-op mode on non-iOS platforms (Android, Web, etc.).
  *
- * Apple UIKit provides the native angle in radians. Set `unit: 'degrees'` (default)
- * or `unit: 'radians'` according to your math/animation needs.
+ * Apple UIKit provides the native angle in radians. Set `unit: 'radians'` (default)
+ * or `unit: 'degrees'` according to your math/animation needs.
  *
  * Reference: Apple Tech Talk 111464:
  * "Hinge data is observed live and is ideal for driving interactions or effects."
@@ -138,11 +138,11 @@ export interface UseHingeAngleResult {
  *
  * @example
  * ```tsx
- * // Default: degrees (0° to 180°)
+ * // Default: radians (0 to π)
  * const { angle, status } = useHingeAngle();
  *
- * // Or explicitly radians (0 to π):
- * const { angle } = useHingeAngle({ unit: 'radians' });
+ * // Or explicitly degrees (0° to 180°):
+ * const { angle } = useHingeAngle({ unit: 'degrees' });
  * ```
  */
 export function useHingeAngle(

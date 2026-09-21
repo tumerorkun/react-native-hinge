@@ -45,6 +45,7 @@ example/web-build/
 .env
 .env*.local
 *.pem
+*.mov
 
 # Editor & IDEs
 .idea/
