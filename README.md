@@ -10,6 +10,9 @@ Architecture based on Apple Tech Talk 111464:
   <img src="https://raw.githubusercontent.com/tumerorkun/react-native-hinge/main/example/assets/demo.gif" width="460" alt="react-native-hinge iPhone Duo Live Demo" />
 </p>
 
+> [!IMPORTANT]
+> **Requirements**: Native hinge interaction requires **Xcode 27.1+** (iOS 27.1 SDK). Older iOS versions, Android, and Web safely fallback to a lightweight no-op without breaking builds.
+
 ---
 
 ## 🌟 Features
