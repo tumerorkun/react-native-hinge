@@ -23,6 +23,8 @@ public extension HingeStatus {
         self = .partiallyopen
       case "fullyOpen":
         self = .fullyopen
+      case "unknown":
+        self = .unknown
       default:
         return nil
     }
@@ -39,6 +41,8 @@ public extension HingeStatus {
         return "partiallyOpen"
       case .fullyopen:
         return "fullyOpen"
+      case .unknown:
+        return "unknown"
     }
   }
 }

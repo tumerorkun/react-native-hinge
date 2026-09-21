@@ -6,13 +6,17 @@
     "iosCxxLibName": "Hinge"
   },
   "android": {
-    "androidNamespace": ["com", "margelo", "hinge"],
+    "androidNamespace": ["hinge"],
     "androidCxxLibName": "Hinge"
   },
   "autolinking": {
     "Hinge": {
       "ios": {
         "language": "swift",
+        "implementationClassName": "HybridHinge"
+      },
+      "android": {
+        "language": "kotlin",
         "implementationClassName": "HybridHinge"
       }
     }

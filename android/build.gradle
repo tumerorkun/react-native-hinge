@@ -1,0 +1,70 @@
+apply plugin: "com.android.library"
+apply plugin: "org.jetbrains.kotlin.android"
+
+// Apply generated autolinking configuration from Nitrogen
+def nitroAutolinking = file("../nitrogen/generated/android/Hinge+autolinking.gradle")
+if (nitroAutolinking.exists()) {
+  apply from: nitroAutolinking
+}
+
+def getExtOrDefault(name, defaultValue) {
+  return rootProject.ext.has(name) ? rootProject.ext.get(name) : defaultValue
+}
+
+android {
+  namespace "com.margelo.nitro.hinge"
+  compileSdkVersion getExtOrDefault("compileSdkVersion", 36)
+
+  defaultConfig {
+    minSdkVersion getExtOrDefault("minSdkVersion", 24)
+    targetSdkVersion getExtOrDefault("targetSdkVersion", 36)
+
+    externalNativeBuild {
+      cmake {
+        cppFlags "-frtti -fexceptions -Wall -Wextra"
+        arguments "-DANDROID_STL=c++_shared", "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+      }
+    }
+  }
+
+  externalNativeBuild {
+    cmake {
+      path "CMakeLists.txt"
+    }
+  }
+
+  buildFeatures {
+    buildConfig true
+    prefab true
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_17
+    targetCompatibility JavaVersion.VERSION_17
+  }
+
+  kotlinOptions {
+    jvmTarget = "17"
+  }
+}
+
+repositories {
+  google()
+  mavenCentral()
+}
+
+dependencies {
+  //noinspection GradleDynamicVersion
+  implementation "com.facebook.react:react-android:+"
+
+  if (findProject(':react-native-nitro-modules') != null) {
+    implementation project(':react-native-nitro-modules')
+  }
+
+  // Jetpack WindowManager for folding posture & features
+  implementation "androidx.window:window:1.3.0"
+  implementation "androidx.window:window-java:1.3.0"
+
+  // AndroidX Core
+  implementation "androidx.core:core-ktx:1.13.1"
+}

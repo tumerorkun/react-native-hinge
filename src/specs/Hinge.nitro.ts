@@ -5,26 +5,25 @@ import { type HybridObject, type Sync } from 'react-native-nitro-modules'
  * Reference: Apple Tech Talk 111464 ("Take advantage of the unique features of iPhone Duo")
  * https://developer.apple.com/videos/play/tech-talks/111464/
  */
-export type HingeStatus = 'closed' | 'partiallyOpen' | 'fullyOpen'
+export type HingeStatus = 'closed' | 'partiallyOpen' | 'fullyOpen' | 'unknown'
 
 /**
  * Continuous hinge data payload observed live.
  * Ideal for driving live interactions or visual effects.
  */
 export interface HingeUpdate {
-  /** Continuous hinge angle in radians (as reported natively by UIKit UIHinge). */
+  /** Continuous hinge angle in radians (as reported natively by UIKit UIHinge / Android TYPE_HINGE_ANGLE). */
   angle: number
-  /** High-level hinge status: 'closed' | 'partiallyOpen' | 'fullyOpen'. */
+  /** High-level hinge status: 'closed' | 'partiallyOpen' | 'fullyOpen' | 'unknown'. */
   status: HingeStatus
   /** Unix epoch timestamp in milliseconds (Date.now() compatible). */
   timestamp: number
 }
 
 /**
- * Nitro Hybrid Object specification for iPhone Duo Hinge API (UIKit UIHingeInteraction).
- * Coming with Xcode SDK 27.1 / iOS 27.1.
+ * Nitro Hybrid Object specification for Hinge API (UIKit UIHingeInteraction / Android Jetpack WindowManager & Hinge Angle Sensor).
  */
-export interface Hinge extends HybridObject<{ ios: 'swift' }> {
+export interface Hinge extends HybridObject<{ ios: 'swift', android: 'kotlin' }> {
   /**
    * Check if current hardware device has a non-null hinge (iPhone Duo).
    */

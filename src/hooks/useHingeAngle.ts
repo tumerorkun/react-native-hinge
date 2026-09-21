@@ -20,16 +20,17 @@ const NoopHinge: Hinge = {
 };
 
 /**
- * Loads native Nitro HybridObject on iOS, or returns safe No-op on other platforms.
+ * Loads native Nitro HybridObject on iOS and Android, or returns safe No-op on other platforms.
  */
 function resolveHingeModule(): Hinge {
-  if (Platform.OS !== "ios") {
+  if (Platform.OS !== "ios" && Platform.OS !== "android") {
     return NoopHinge;
   }
 
   try {
     return NitroModules.createHybridObject<Hinge>("Hinge");
-  } catch {
+  } catch (e) {
+    console.error("[react-native-hinge] Failed to create Hinge HybridObject:", e);
     // If native module is not linked or unavailable in this build, fallback to Noop
     return NoopHinge;
   }
@@ -162,8 +163,8 @@ export function useHingeAngle(
   );
 
   useEffect(() => {
-    // If disabled or non-iOS platform, do not attach native listeners
-    if (!enabled || Platform.OS !== "ios") {
+    // If disabled or unsupported platform, do not attach native listeners
+    if (!enabled || (Platform.OS !== "ios" && Platform.OS !== "android")) {
       return;
     }
 

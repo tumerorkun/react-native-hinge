@@ -1,30 +1,35 @@
 # react-native-hinge
 
-A React Native native library built with **Nitro Modules** exposing the **iPhone Duo Hinge API** (`UIHingeInteraction`) to JavaScript with zero-latency **UI-thread Worklet** support (`react-native-worklets`).
+A cross-platform React Native native library built with **Nitro Modules** exposing continuous hinge angle reading and folding posture monitoring for **iOS** (UIKit `UIHingeInteraction`) and **Android** (Jetpack WindowManager & `TYPE_HINGE_ANGLE` sensor) to JavaScript with zero-latency **UI-thread Worklet** support (`react-native-worklets`).
 
-Architecture based on Apple Tech Talk 111464:
+Architecture inspired by Apple Tech Talk 111464:
 **["Take advantage of the unique features of iPhone Duo"](https://developer.apple.com/videos/play/tech-talks/111464/)**
-*(Chris Donegan, Engineering Manager in UI Frameworks & Alex Muller, System Experience Engineer)*.
+*(Chris Donegan, Engineering Manager in UI Frameworks & Alex Muller, System Experience Engineer)* and Android Jetpack WindowManager foldable standards.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/tumerorkun/react-native-hinge/main/example/assets/demo.gif" width="460" alt="react-native-hinge iPhone Duo Live Demo" />
+  <img src="https://raw.githubusercontent.com/tumerorkun/react-native-hinge/main/example/assets/demo.gif" width="48%" alt="react-native-hinge iOS Demo" />
+  <img src="https://raw.githubusercontent.com/tumerorkun/react-native-hinge/main/example/assets/android_demo.gif" width="48%" alt="react-native-hinge Android Demo" />
 </p>
 
 > [!IMPORTANT]
-> **Requirements**: Native hinge interaction requires **Xcode 27.1+** (iOS 27.1 SDK). Older iOS versions, Android, and Web safely fallback to a lightweight no-op without breaking builds.
+> **Requirements**:
+> - **iOS**: Native hinge interaction requires **Xcode 27.1+** (iOS 27.1 SDK) on hardware supporting `UIHingeInteraction` (e.g. iPhone Duo).
+> - **Android**: Requires **Android API 24+** (`minSdkVersion 24`). Continuous angle readings use Android's `TYPE_HINGE_ANGLE` hardware sensor (API 30+), and posture tracking is powered by Jetpack WindowManager across foldable form-factors (Samsung Galaxy Z Fold/Flip, Google Pixel Fold, OnePlus Open, Motorola Razr, Microsoft Surface Duo, etc.).
+> - **Graceful Fallback**: Non-foldable devices, older OS versions, and Web safely fallback to a lightweight no-op without throwing errors or breaking builds.
 
 ---
 
 ## 🌟 Features
 
-- ⚡ **Nitro Modules Architecture**: Ultra-fast C++ and Swift Hybrid Objects with zero serialization overhead.
-- 🧵 **Zero-Latency UI-Thread Worklets**: Directly observe continuous hinge angle streams using `react-native-worklets` running directly on the UI Runtime.
-- 📐 **Apple Tech Talk 111464 Alignment**:
-  - High-level hinge status: `'closed' | 'partiallyOpen' | 'fullyOpen'`.
+- ⚡ **Nitro Modules Architecture**: Ultra-fast C++, Swift, and Kotlin Hybrid Objects with direct JSI bindings and zero serialization overhead.
+- 🧵 **Zero-Latency UI-Thread Worklets**: Directly observe continuous hinge angle streams using `react-native-worklets` running synchronously on the UI Runtime.
+- 📐 **Unified Status & Angles**:
+  - High-level hinge status: `'closed' | 'partiallyOpen' | 'fullyOpen' | 'unknown'`.
   - Continuous hinge angle updates (ideal for live effects and interactions like pitch bends, 3D folding transforms, or responsive layouts).
-  - Checking for non-null hinge to determine hardware support.
-- 🍏 **Native iOS 27.1 Support**: Full native implementation using UIKit's `UIHingeInteraction` with `if #available(iOS 27.1, *)`.
-- 🛡️ **Cross-Platform Safe**: Android, Web, and legacy iOS safely fallback to a lightweight No-op without crashing or breaking builds.
+  - Hardware detection via `isSupported`.
+- 🍏 **Native iOS 27.1 Support**: Full native implementation using UIKit's `UIHingeInteraction`.
+- 🤖 **Native Android Support**: Full native implementation combining Android Jetpack WindowManager (`FoldingFeature`) and Android `Sensor.TYPE_HINGE_ANGLE`.
+- 🛡️ **Cross-Platform Safe**: Standard non-foldable phones, Web, and legacy OS versions safely fallback without crashing.
 - 📱 **Included Interactive Example App**: Telemetry, live posture monitor, and whammy-bar pitch bend demo.
 
 ---
@@ -33,19 +38,27 @@ Architecture based on Apple Tech Talk 111464:
 
 ```bash
 npm install react-native-hinge react-native-nitro-modules react-native-worklets
+# or
+bun add react-native-hinge react-native-nitro-modules react-native-worklets
+# or
+yarn add react-native-hinge react-native-nitro-modules react-native-worklets
 ```
 
-Then install CocoaPods:
+### iOS Setup
+Install CocoaPods:
 
 ```bash
 cd ios && pod install
 ```
 
+### Android Setup
+Android autolinking is configured out-of-the-box via React Native and Nitro Modules. No additional manual steps are required.
+
 ---
 
 ## 🛠️ Nitro Codegen
 
-To generate the C++ and Swift glue code:
+To regenerate C++, Swift, and Kotlin bindings whenever specs change:
 
 ```bash
 npm run codegen
@@ -57,13 +70,13 @@ npm run codegen
 
 ### 1. Live Interactive Effects with UI-Thread Worklets
 
-UIKit's `UIHingeInteraction` reports the native angle in **radians** (0 to π). `useHingeAngle` defaults to **radians** (`unit: 'radians'`, 0 to π), matching UIKit natively. You can pass `unit: 'degrees'` (0° to 180°) whenever needed:
+Native APIs report the angle in **radians** (0 to π). `useHingeAngle` defaults to **radians** (`unit: 'radians'`), matching native platforms. You can pass `unit: 'degrees'` (0° to 180°) whenever preferred:
 
 ```tsx
 import React, { useCallback } from 'react'
 import { useHingeAngle, type HingeUpdate } from 'react-native-hinge'
 
-export function DuoInteractionView() {
+export function FoldableInteractionView() {
   // Memoize callback to prevent re-declaring on every render
   const onHingeUpdate = useCallback((update: HingeUpdate) => {
     'worklet'
@@ -75,9 +88,8 @@ export function DuoInteractionView() {
     }
   }, [])
 
-  // Radians (default):
   const { angle, status, isSupported } = useHingeAngle({
-    unit: 'radians', // 'radians' (default, 0 to π) or 'degrees' (0° to 180°)
+    unit: 'degrees', // 'degrees' (0° to 180°) or 'radians' (default, 0 to π)
     onHingeUpdate,
   })
 
@@ -87,7 +99,7 @@ export function DuoInteractionView() {
 
 ### 2. Direct Subscription API (`subscribeToHinge`)
 
-You can subscribe directly to continuous hinge updates outside of React components or in custom stores. Note that the low-level `subscribeToHinge` passes the native UIKit value (in radians), and helper conversion functions `radiansToDegrees` and `degreesToRadians` are exported for your convenience:
+You can subscribe directly to continuous hinge updates outside of React components or inside custom stores. The low-level `subscribeToHinge` passes native values in radians. Conversion helpers `radiansToDegrees` and `degreesToRadians` are exported for convenience:
 
 ```typescript
 import { subscribeToHinge, radiansToDegrees } from 'react-native-hinge'
@@ -103,24 +115,20 @@ unsubscribe()
 
 ### 3. High-Level Hinge Status Hook (`useHingeStatus`)
 
-Track discrete transitions (`closed` -> `partiallyOpen` -> `fullyOpen`):
+Track discrete posture transitions (`closed` -> `partiallyOpen` -> `fullyOpen` -> `unknown`):
 
 ```tsx
-import React, { useCallback } from 'react'
+import React from 'react'
 import { useHingeStatus } from 'react-native-hinge'
 
-export function AdaptiveDuoLayout() {
-  const handleStatusChange = useCallback((newStatus: string) => {
-    console.log('iPhone Duo hinge status changed to:', newStatus)
-  }, [])
-
-  const status = useHingeStatus(handleStatusChange)
+export function AdaptiveLayout() {
+  const status = useHingeStatus()
 
   if (status === 'partiallyOpen') {
-    return <BookOrSeatedLayout />
+    return <DualPaneOrBookLayout />
   }
 
-  return <CanvasLayout />
+  return <StandardCanvasLayout />
 }
 ```
 
@@ -128,11 +136,12 @@ export function AdaptiveDuoLayout() {
 
 ## 📐 Hinge Status Reference
 
-| Status | Apple Tech Talk Description |
-| :--- | :--- |
-| `closed` | Device is folded shut, outer display active |
-| `partiallyOpen` | Device is between closed and flat (Seated, Book, Tent). Angle is actively read to drive interactions. |
-| `fullyOpen` | Continuous large canvas unfolded |
+| Status | iOS (UIHinge) | Android (WindowManager & Sensor) | Description |
+| :--- | :--- | :--- | :--- |
+| `closed` | `UIHinge.Status.closed` | - | Device is folded shut, outer display active. |
+| `partiallyOpen` | `UIHinge.Status.partiallyOpen` | `FoldingFeature.State.HALF_OPENED` | Device is between closed and flat (Tabletop, Book, Tent). Angle is actively read to drive interactions. |
+| `fullyOpen` | `UIHinge.Status.fullyOpen` | `FoldingFeature.State.FLAT` | Continuous large canvas unfolded flat (180°). |
+| `unknown` | - | No folding feature or sensor-only | Standalone sensor reading without an associated folding feature, or flat non-separating display. |
 
 ---
 

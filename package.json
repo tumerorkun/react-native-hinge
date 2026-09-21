@@ -1,7 +1,7 @@
 {
   "name": "react-native-hinge",
-  "version": "0.2.3",
-  "description": "Continuous hinge angle reading and posture monitoring for iOS 27 iPhone Duo with Nitro Modules and UI-thread Worklets",
+  "version": "0.3.0",
+  "description": "Continuous hinge angle reading and folding posture monitoring for iOS and Android with Nitro Modules and UI-thread Worklets",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "react-native": "src/index.ts",

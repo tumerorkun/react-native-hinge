@@ -32,6 +32,7 @@ namespace margelo::nitro::hinge {
     CLOSED      SWIFT_NAME(closed) = 0,
     PARTIALLYOPEN      SWIFT_NAME(partiallyopen) = 1,
     FULLYOPEN      SWIFT_NAME(fullyopen) = 2,
+    UNKNOWN      SWIFT_NAME(unknown) = 3,
   } CLOSED_ENUM;
 
 } // namespace margelo::nitro::hinge
@@ -47,6 +48,7 @@ namespace margelo::nitro {
         case hashString("closed"): return margelo::nitro::hinge::HingeStatus::CLOSED;
         case hashString("partiallyOpen"): return margelo::nitro::hinge::HingeStatus::PARTIALLYOPEN;
         case hashString("fullyOpen"): return margelo::nitro::hinge::HingeStatus::FULLYOPEN;
+        case hashString("unknown"): return margelo::nitro::hinge::HingeStatus::UNKNOWN;
         default: [[unlikely]]
           throw std::invalid_argument("Cannot convert \"" + unionValue + "\" to enum HingeStatus - invalid value!");
       }
@@ -56,6 +58,7 @@ namespace margelo::nitro {
         case margelo::nitro::hinge::HingeStatus::CLOSED: return JSIConverter<std::string>::toJSI(runtime, "closed");
         case margelo::nitro::hinge::HingeStatus::PARTIALLYOPEN: return JSIConverter<std::string>::toJSI(runtime, "partiallyOpen");
         case margelo::nitro::hinge::HingeStatus::FULLYOPEN: return JSIConverter<std::string>::toJSI(runtime, "fullyOpen");
+        case margelo::nitro::hinge::HingeStatus::UNKNOWN: return JSIConverter<std::string>::toJSI(runtime, "unknown");
         default: [[unlikely]]
           throw std::invalid_argument("Cannot convert HingeStatus to JS - invalid value: "
                                     + std::to_string(static_cast<int>(arg)) + "!");
@@ -70,6 +73,7 @@ namespace margelo::nitro {
         case hashString("closed"):
         case hashString("partiallyOpen"):
         case hashString("fullyOpen"):
+        case hashString("unknown"):
           return true;
         default:
           return false;

@@ -26,6 +26,8 @@ build/
 .gradle/
 android/build/
 android/app/build/
+.cxx/
+*/.cxx/
 local.properties
 *.apk
 *.aab
