@@ -1,5 +1,9 @@
 # react-native-hinge
 
+[![npm version](https://img.shields.io/npm/v/react-native-hinge.svg?style=flat-square)](https://www.npmjs.com/package/react-native-hinge)
+[![npm downloads](https://img.shields.io/npm/dm/react-native-hinge.svg?style=flat-square)](https://www.npmjs.com/package/react-native-hinge)
+[![license](https://img.shields.io/npm/l/react-native-hinge.svg?style=flat-square)](https://github.com/tumerorkun/react-native-hinge/blob/main/LICENSE)
+
 A cross-platform React Native native library built with **Nitro Modules** exposing continuous hinge angle reading and folding posture monitoring for **iOS** (UIKit `UIHingeInteraction`) and **Android** (Jetpack WindowManager & `TYPE_HINGE_ANGLE` sensor) to JavaScript with zero-latency **UI-thread Worklet** support (`react-native-worklets`).
 
 Architecture inspired by Apple Tech Talk 111464:
